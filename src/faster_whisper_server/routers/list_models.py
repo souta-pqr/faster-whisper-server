@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated, TYPE_CHECKING
 
 from fastapi import (
     APIRouter,
     HTTPException,
     Path,
+    Security
 )
 import huggingface_hub
 
@@ -13,6 +14,7 @@ from faster_whisper_server.api_models import (
     ListModelsResponse,
     Model,
 )
+from faster_whisper_server.security import check_api_key
 
 if TYPE_CHECKING:
     from huggingface_hub.hf_api import ModelInfo
@@ -21,7 +23,7 @@ router = APIRouter()
 
 
 @router.get("/v1/models")
-def get_models() -> ListModelsResponse:
+def get_models(_: str = Security(check_api_key)) -> ListModelsResponse:
     models = huggingface_hub.list_models(library="ctranslate2", tags="automatic-speech-recognition", cardData=True)
     models = list(models)
     models.sort(key=lambda model: model.downloads or -1, reverse=True)
@@ -51,6 +53,7 @@ def get_models() -> ListModelsResponse:
 # NOTE: `examples` doesn't work https://github.com/tiangolo/fastapi/discussions/10537
 def get_model(
     model_name: Annotated[str, Path(example="Systran/faster-distil-whisper-large-v3")],
+    _: str = Security(check_api_key)
 ) -> Model:
     models = huggingface_hub.list_models(
         model_name=model_name, library="ctranslate2", tags="automatic-speech-recognition", cardData=True

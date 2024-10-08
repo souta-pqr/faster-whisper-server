@@ -11,6 +11,7 @@ from fastapi import (
     Query,
     Request,
     Response,
+    Security,
     UploadFile,
     WebSocket,
     WebSocketDisconnect,
@@ -37,6 +38,7 @@ from faster_whisper_server.config import (
     Task,
 )
 from faster_whisper_server.dependencies import ConfigDependency, ModelManagerDependency, get_config
+from faster_whisper_server.security import check_api_key
 from faster_whisper_server.text_utils import segments_to_srt, segments_to_text, segments_to_vtt
 from faster_whisper_server.transcriber import audio_transcriber
 
@@ -147,6 +149,7 @@ def translate_file(
     temperature: Annotated[float, Form()] = 0.0,
     stream: Annotated[bool, Form()] = False,
     vad_filter: Annotated[bool, Form()] = False,
+    _: str = Security(check_api_key)
 ) -> Response | StreamingResponse:
     if model is None:
         model = config.whisper.model
@@ -184,7 +187,7 @@ async def get_timestamp_granularities(request: Request) -> TimestampGranularitie
 # https://github.com/openai/openai-openapi/blob/master/openapi.yaml#L8915
 @router.post(
     "/v1/audio/transcriptions",
-    response_model=str | CreateTranscriptionResponseJson | CreateTranscriptionResponseVerboseJson,
+    response_model=str | CreateTranscriptionResponseJson | CreateTranscriptionResponseVerboseJson
 )
 def transcribe_file(
     config: ConfigDependency,
@@ -204,6 +207,7 @@ def transcribe_file(
     stream: Annotated[bool, Form()] = False,
     hotwords: Annotated[str | None, Form()] = None,
     vad_filter: Annotated[bool, Form()] = False,
+    _: str=Security(check_api_key)
 ) -> Response | StreamingResponse:
     if model is None:
         model = config.whisper.model
@@ -276,6 +280,7 @@ async def transcribe_stream(
     response_format: Annotated[ResponseFormat | None, Query()] = None,
     temperature: Annotated[float, Query()] = 0.0,
     vad_filter: Annotated[bool, Query()] = False,
+    _: str = Security(check_api_key)
 ) -> None:
     if model is None:
         model = config.whisper.model
