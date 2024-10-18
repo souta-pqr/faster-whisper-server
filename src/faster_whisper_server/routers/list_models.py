@@ -1,13 +1,8 @@
 from __future__ import annotations
 
-from typing import Annotated, TYPE_CHECKING
+from typing import TYPE_CHECKING, Annotated
 
-from fastapi import (
-    APIRouter,
-    HTTPException,
-    Path,
-    Security
-)
+from fastapi import APIRouter, HTTPException, Path, Security
 import huggingface_hub
 
 from faster_whisper_server.api_models import (

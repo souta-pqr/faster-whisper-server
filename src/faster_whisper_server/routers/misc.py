@@ -1,10 +1,6 @@
 from __future__ import annotations
 
-from fastapi import (
-    APIRouter,
-    Response,
-    Security
-)
+from fastapi import APIRouter, Response, Security
 import huggingface_hub
 from huggingface_hub.hf_api import RepositoryNotFoundError
 
