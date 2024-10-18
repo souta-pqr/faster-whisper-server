@@ -5,8 +5,13 @@ on:
     branches:
       - master
   pull_request:
+  workflow_run:
+    workflows: ["lint"]
+    types:
+      - completed
 jobs:
   pytest:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
