@@ -17,10 +17,7 @@ def health() -> Response:
 
 
 @router.post("/api/pull/{model_name:path}", tags=["experimental"], summary="Download a model from Hugging Face.")
-def pull_model(
-    model_name: str,
-    _: str = Security(check_api_key)
-) -> Response:
+def pull_model(model_name: str, _: str = Security(check_api_key)) -> Response:
     if hf_utils.does_local_model_exist(model_name):
         return Response(status_code=200, content="Model already exists")
     try:
@@ -31,18 +28,13 @@ def pull_model(
 
 
 @router.get("/api/ps", tags=["experimental"], summary="Get a list of loaded models.")
-def get_running_models(
-    model_manager: ModelManagerDependency,
-    _: str = Security(check_api_key)
-) -> dict[str, list[str]]:
+def get_running_models(model_manager: ModelManagerDependency, _: str = Security(check_api_key)) -> dict[str, list[str]]:
     return {"models": list(model_manager.loaded_models.keys())}
 
 
 @router.post("/api/ps/{model_name:path}", tags=["experimental"], summary="Load a model into memory.")
 def load_model_route(
-    model_manager: ModelManagerDependency,
-    model_name: str,
-    _: str = Security(check_api_key)
+    model_manager: ModelManagerDependency, model_name: str, _: str = Security(check_api_key)
 ) -> Response:
     if model_name in model_manager.loaded_models:
         return Response(status_code=409, content="Model already loaded")
@@ -53,9 +45,7 @@ def load_model_route(
 
 @router.delete("/api/ps/{model_name:path}", tags=["experimental"], summary="Unload a model from memory.")
 def stop_running_model(
-    model_manager: ModelManagerDependency,
-    model_name: str,
-    _: str = Security(check_api_key)
+    model_manager: ModelManagerDependency, model_name: str, _: str = Security(check_api_key)
 ) -> Response:
     try:
         model_manager.unload_model(model_name)
