@@ -1,6 +1,5 @@
 name: test
 on:
-  workflow_dispatch:
   workflow_run:
     workflows: ["lint"]
     types:
