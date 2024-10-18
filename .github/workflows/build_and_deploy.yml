@@ -3,7 +3,7 @@ name: Build and deploy when pushing on staging or main
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   build-and-push:
@@ -32,20 +32,22 @@ jobs:
         with:
           context: .
           file: ./Dockerfile.cpu
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ env.CPU_IMAGE_NAME }}:${{ env.IMAGE_TAG }},${{ env.CPU_IMAGE_NAME }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=registry,ref=${{ env.CPU_IMAGE_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ env.CPU_IMAGE_NAME }}:buildcache,mode=max
       
       - name: Build and push cuda
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile.cuda
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ env.CUDA_IMAGE_NAME }}:${{ env.IMAGE_TAG }},${{ env.CUDA_IMAGE_NAME }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=registry,ref=${{ env.CUDA_IMAGE_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ env.CUDA_IMAGE_NAME }}:buildcache,mode=max
 
   deploy-prod:
     name: Deploy from ${{ github.ref_name }}/${{ github.sha }}
