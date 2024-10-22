@@ -10,7 +10,7 @@ jobs:
     env:
       CPU_IMAGE_NAME: ghcr.io/${{ github.repository }}/cpu
       CUDA_IMAGE_NAME: ghcr.io/${{ github.repository }}/cuda
-      IMAGE_TAG: ${{ github.sha }}
+      IMAGE_TAG: ${{ github.ref_name }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
