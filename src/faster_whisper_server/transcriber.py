@@ -50,6 +50,7 @@ async def audio_transcriber(
     asr: FasterWhisperASR,
     audio_stream: AudioStream,
     min_duration: float,
+    beam_size: int | None = None,
 ) -> AsyncGenerator[Transcription, None]:
     local_agreement = LocalAgreement()
     full_audio = Audio()
@@ -57,7 +58,7 @@ async def audio_transcriber(
     async for chunk in audio_stream.chunks(min_duration):
         full_audio.extend(chunk)
         audio = full_audio.after(needs_audio_after(confirmed))
-        transcription, _ = await asr.transcribe(audio, prompt(confirmed))
+        transcription, _ = await asr.transcribe(audio, prompt(confirmed), beam_size=beam_size)
         new_words = local_agreement.merge(confirmed, transcription)
         if len(new_words) > 0:
             confirmed.extend(new_words)

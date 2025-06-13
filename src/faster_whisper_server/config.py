@@ -162,6 +162,11 @@ class WhisperConfig(BaseModel):
     compute_type: Quantization = Field(default=Quantization.DEFAULT)
     cpu_threads: int = 0
     num_workers: int = 1
+    beam_size: int = Field(default=5)
+    """
+    Number of beams in beam search. Smaller values are faster but may reduce accuracy.
+    Default is 5. For speed optimization, consider using 1-3.
+    """
     ttl: int = Field(default=300, ge=-1)
     """
     Time in seconds until the model is unloaded if it is not being used.

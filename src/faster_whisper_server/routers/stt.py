@@ -147,6 +147,7 @@ def translate_file(
     prompt: Annotated[str | None, Form()] = None,
     response_format: Annotated[ResponseFormat | None, Form()] = None,
     temperature: Annotated[float, Form()] = 0.0,
+    beam_size: Annotated[int | None, Form()] = None,
     stream: Annotated[bool, Form()] = False,
     vad_filter: Annotated[bool, Form()] = False,
     _: str = Security(check_api_key),
@@ -155,12 +156,16 @@ def translate_file(
         model = config.whisper.model
     if response_format is None:
         response_format = config.default_response_format
+    if beam_size is None:
+        beam_size = config.whisper.beam_size
+    
     with model_manager.load_model(model) as whisper:
         segments, transcription_info = whisper.transcribe(
             file.file,
             task=Task.TRANSLATE,
             initial_prompt=prompt,
             temperature=temperature,
+            beam_size=beam_size,
             vad_filter=vad_filter,
         )
         segments = TranscriptionSegment.from_faster_whisper_segments(segments)
@@ -199,6 +204,7 @@ def transcribe_file(
     prompt: Annotated[str | None, Form()] = None,
     response_format: Annotated[ResponseFormat | None, Form()] = None,
     temperature: Annotated[float, Form()] = 0.0,
+    beam_size: Annotated[int | None, Form()] = None,
     timestamp_granularities: Annotated[
         TimestampGranularities,
         # WARN: `alias` doesn't actually work.
@@ -215,6 +221,9 @@ def transcribe_file(
         language = config.default_language
     if response_format is None:
         response_format = config.default_response_format
+    if beam_size is None:
+        beam_size = config.whisper.beam_size
+        
     timestamp_granularities = asyncio.run(get_timestamp_granularities(request))
     if timestamp_granularities != DEFAULT_TIMESTAMP_GRANULARITIES and response_format != ResponseFormat.VERBOSE_JSON:
         logger.warning(
@@ -228,6 +237,7 @@ def transcribe_file(
             initial_prompt=prompt,
             word_timestamps="word" in timestamp_granularities,
             temperature=temperature,
+            beam_size=beam_size,
             vad_filter=vad_filter,
             hotwords=hotwords,
         )
@@ -279,6 +289,7 @@ async def transcribe_stream(
     language: Annotated[Language | None, Query()] = None,
     response_format: Annotated[ResponseFormat | None, Query()] = None,
     temperature: Annotated[float, Query()] = 0.0,
+    beam_size: Annotated[int | None, Query()] = None,
     vad_filter: Annotated[bool, Query()] = False,
     _: str = Security(check_api_key),
 ) -> None:
@@ -288,10 +299,14 @@ async def transcribe_stream(
         language = config.default_language
     if response_format is None:
         response_format = config.default_response_format
+    if beam_size is None:
+        beam_size = config.whisper.beam_size
+        
     await ws.accept()
     transcribe_opts = {
         "language": language,
         "temperature": temperature,
+        "beam_size": beam_size,
         "vad_filter": vad_filter,
         "condition_on_previous_text": False,
     }
@@ -300,7 +315,7 @@ async def transcribe_stream(
         audio_stream = AudioStream()
         async with asyncio.TaskGroup() as tg:
             tg.create_task(audio_receiver(ws, audio_stream))
-            async for transcription in audio_transcriber(asr, audio_stream, min_duration=config.min_duration):
+            async for transcription in audio_transcriber(asr, audio_stream, min_duration=config.min_duration, beam_size=beam_size):
                 logger.debug(f"Sending transcription: {transcription.text}")
                 if ws.client_state == WebSocketState.DISCONNECTED:
                     break
